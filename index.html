@@ -1,0 +1,524 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Home Layout Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .layout-tool-body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1F2937;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .layout-tool-body > p {
+            font-size: 1rem;
+            color: #4B5563;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .layout-tool-container {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            background: #FFFFFF;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        /* Palette */
+        #palette {
+            background: #F1F5F9;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #E2E8F0;
+        }
+
+        #palette h3 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1F2937;
+            margin-bottom: 5px;
+        }
+
+        #palette-instructions {
+            font-size: 0.85rem;
+            color: #6B7280;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .draggable-container-template {
+            border: 2px dashed #6B7280;
+            background: #F9FAFB;
+            color: #374151;
+            cursor: grab;
+            text-align: center;
+            font-weight: 500;
+            padding: 8px;
+            border-radius: 6px;
+            transition: transform 0.2s, background 0.2s, border-color 0.2s;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .draggable-container-template:hover {
+            background: #E5E7EB;
+            border-color: #3B82F6;
+            transform: scale(1.05);
+        }
+
+        .container-20hc { width: 100px; height: 40px; line-height: 30px; }
+        .container-40hc { width: 180px; height: 40px; line-height: 30px; }
+
+        /* Design Area */
+        #design-area {
+            flex-grow: 1;
+            border: 2px solid #D1D5DB;
+            min-height: 500px;
+            background: #FFFFFF;
+            background-image: linear-gradient(to right, #E5E7EB 1px, transparent 1px),
+                              linear-gradient(to bottom, #E5E7EB 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .placed-container {
+            position: absolute;
+            border: 2px solid #3B82F6;
+            background: rgba(59, 130, 246, 0.8);
+            color: #FFFFFF;
+            cursor: move;
+            text-align: center;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: transform 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            user-select: none;
+            touch-action: none;
+            animation: dropAnimation 0.3s ease;
+        }
+
+        .placed-container.selected {
+            border-color: #EF4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+            transform: scale(1.03);
+            z-index: 10;
+        }
+
+        @keyframes dropAnimation {
+            from { transform: scale(0.9); opacity: 0.7; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Controls & Sq Ft Display */
+        .controls-and-sqft {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            background: #F1F5F9;
+            padding: 15px;
+            border-radius: 8px;
+            gap: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1F2937;
+            background: #FFFFFF;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .controls button:hover:not(:disabled) {
+            background: #3B82F6;
+            color: #FFFFFF;
+            transform: translateY(-2px);
+        }
+
+        .controls button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        #sqft-display-container {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1F2937;
+            background: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #D1D5DB;
+        }
+
+        #total-sqft {
+            color: #3B82F6;
+            font-weight: 700;
+        }
+
+        /* Call to Action */
+        .cta-section {
+            width: 100%;
+            max-width: 1200px;
+            background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-section p {
+            font-size: 1rem;
+            color: #1F2937;
+            margin-bottom: 15px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: #FFFFFF;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .cta-section a:not(.cta-button) {
+            color: #2563EB;
+            text-decoration: underline;
+        }
+
+        .cta-section a:not(.cta-button):hover {
+            color: #1E40AF;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .layout-tool-container {
+                grid-template-columns: 1fr;
+            }
+
+            #palette {
+                width: 100%;
+                flex-direction: row;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .draggable-container-template {
+                width: 120px !important;
+                height: 40px !important;
+                line-height: 30px !important;
+            }
+
+            #design-area {
+                min-height: 300px;
+            }
+
+            .controls-and-sqft {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout-tool-body">
+        <h1>Container Home Layout Visualizer</h1>
+        <p>Design your dream container home by dragging containers onto the grid below.</p>
+        <div class="layout-tool-container">
+            <div id="palette">
+                <h3>Container Palette</h3>
+                <p id="palette-instructions">Drag containers to the grid. Tap to select, rotate, or delete.</p>
+                <div class="draggable-container-template container-20hc" data-type="20hc" data-width="100" data-height="40">20' HC</div>
+                <div class="draggable-container-template container-40hc" data-type="40hc" data-width="180" data-height="40">40' HC</div>
+            </div>
+            <div id="design-area" class="dropzone"></div>
+        </div>
+        <div class="controls-and-sqft">
+            <div class="controls">
+                <button id="rotate-button" disabled>Rotate (90°)</button>
+                <button id="delete-button" disabled>Delete</button>
+                <button id="clear-button">Clear All</button>
+            </div>
+            <div id="sqft-display-container">
+                Total Footprint: <span id="total-sqft">0</span> sq ft
+            </div>
+        </div>
+        <div class="cta-section">
+            <p>Love your layout? Bring it to life with professional plans!</p>
+            <a href="https://oasisengineering.com/contact" target="_blank" class="cta-button">Get Custom Engineered Plans</a>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Need structural mods or permit-ready drawings? <a href="https://oasisengineering.com/" target="_blank">Oasis Engineering</a> has you covered.</p>
+        </div>
+    </div>
+
+    <script>
+      (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            const designArea = document.getElementById('design-area');
+            const rotateButton = document.getElementById('rotate-button');
+            const deleteButton = document.getElementById('delete-button');
+            const clearButton = document.getElementById('clear-button');
+            const totalSqftSpan = document.getElementById('total-sqft');
+            let selectedElement = null;
+
+            const SQFT_PER_CONTAINER = {
+                '20hc': 160,
+                '40hc': 320
+            };
+
+            if (typeof interact === 'undefined') {
+                console.error("Interact.js library not loaded.");
+                if (designArea) {
+                    designArea.innerHTML = '<p style="color: #EF4444; text-align: center; padding: 20px;">Error: Layout tool could not load (Interact.js missing).</p>';
+                }
+                return;
+            }
+
+            function updateSquareFootage() {
+                if (!totalSqftSpan) return;
+                let currentTotalSqFt = 0;
+                const placedContainers = designArea.querySelectorAll('.placed-container');
+                placedContainers.forEach(container => {
+                    const type = container.getAttribute('data-type');
+                    currentTotalSqFt += SQFT_PER_CONTAINER[type] || 0;
+                });
+                totalSqftSpan.textContent = currentTotalSqFt;
+            }
+
+            function makeElementInteractable(element) {
+                interact(element)
+                    .draggable({
+                        inertia: false,
+                        modifiers: [
+                            interact.modifiers.snap({ targets: [interact.createSnapGrid({ x: 10, y: 10 })], range: Infinity, relativePoints: [{ x: 0, y: 0 }] }),
+                            interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true })
+                        ],
+                        autoScroll: true,
+                        listeners: {
+                            start(event) { selectElement(event.target); event.target.style.cursor = 'grabbing'; },
+                            move(event) {
+                                const target = event.target;
+                                const currentTransform = target.style.transform || '';
+                                const rotationMatch = currentTransform.match(/rotate\((.*?)\)/);
+                                const currentRotation = rotationMatch ? parseFloat(rotationMatch[1]) : 0;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                                target.style.transform = `translate(${x}px, ${y}px) rotate(${currentRotation}deg)`;
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            },
+                            end(event) { event.target.style.cursor = 'move'; }
+                        }
+                    })
+                    .on('tap', function (event) { selectElement(event.currentTarget); });
+            }
+
+            function selectElement(element) {
+                if (selectedElement && selectedElement !== element) {
+                    selectedElement.classList.remove('selected');
+                    selectedElement.style.zIndex = '1';
+                }
+                if (element && element.classList.contains('placed-container')) {
+                    if (selectedElement === element) {
+                        element.classList.remove('selected');
+                        selectedElement = null;
+                        if (rotateButton) rotateButton.disabled = true;
+                        if (deleteButton) deleteButton.disabled = true;
+                        element.style.zIndex = '1';
+                    } else {
+                        selectedElement = element;
+                        selectedElement.classList.add('selected');
+                        if (rotateButton) rotateButton.disabled = false;
+                        if (deleteButton) deleteButton.disabled = false;
+                        const highestZ = Array.from(designArea.querySelectorAll('.placed-container')).reduce((max, el) => Math.max(max, parseInt(el.style.zIndex || '1')), 1);
+                        selectedElement.style.zIndex = (highestZ + 1).toString();
+                    }
+                } else {
+                    if (selectedElement) {
+                        selectedElement.classList.remove('selected');
+                        selectedElement.style.zIndex = '1';
+                    }
+                    selectedElement = null;
+                    if (rotateButton) rotateButton.disabled = true;
+                    if (deleteButton) deleteButton.disabled = true;
+                }
+            }
+
+            interact('.draggable-container-template').draggable({
+                inertia: true,
+                listeners: {
+                    start(event) { event.target.style.opacity = '0.7'; event.target.style.cursor = 'grabbing'; },
+                    move(event) {
+                        const target = event.target;
+                        const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                        const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                        target.style.transform = `translate(${x}px, ${y}px)`;
+                        target.setAttribute('data-x', x);
+                        target.setAttribute('data-y', y);
+                    },
+                    end(event) {
+                        event.target.style.opacity = '1';
+                        event.target.style.cursor = 'grab';
+                        event.target.style.transform = 'translate(0px, 0px)';
+                        event.target.removeAttribute('data-x');
+                        event.target.removeAttribute('data-y');
+                    }
+                },
+                modifiers: [ interact.modifiers.restrictRect({ restriction: 'body', endOnly: true }) ]
+            });
+
+            interact(designArea).dropzone({
+                accept: '.draggable-container-template',
+                overlap: 0.1,
+                ondropactivate: (event) => { event.target.style.borderStyle = 'dashed'; event.target.style.borderColor = '#10B981'; },
+                ondragleave: (event) => { event.target.style.borderStyle = 'solid'; event.target.style.borderColor = '#D1D5DB'; },
+                ondropdeactivate: (event) => { event.target.style.borderStyle = 'solid'; event.target.style.borderColor = '#D1D5DB'; },
+                ondrop: function (event) {
+                    try {
+                        const templateElement = event.relatedTarget;
+                        const designAreaRect = designArea.getBoundingClientRect();
+                        const dropX = event.pageX - designAreaRect.left + designArea.scrollLeft;
+                        const dropY = event.pageY - designAreaRect.top + designArea.scrollTop;
+                        const newContainer = document.createElement('div');
+                        newContainer.classList.add('placed-container');
+                        const containerType = templateElement.dataset.type || 'unknown';
+                        newContainer.classList.add(`container-${containerType}`);
+                        newContainer.textContent = templateElement.textContent;
+                        const containerWidth = parseFloat(templateElement.dataset.width) || 100;
+                        const containerHeight = parseFloat(templateElement.dataset.height) || 40;
+                        newContainer.style.width = `${containerWidth}px`;
+                        newContainer.style.height = `${containerHeight}px`;
+                        newContainer.style.lineHeight = `${containerHeight - 4}px`;
+                        newContainer.setAttribute('data-type', containerType);
+                        newContainer.setAttribute('data-rotation', '0');
+                        const initialX = dropX - (containerWidth / 2);
+                        const initialY = dropY - (containerHeight / 2);
+                        const boundedX = Math.max(0, Math.min(initialX, designArea.clientWidth - containerWidth));
+                        const boundedY = Math.max(0, Math.min(initialY, designArea.clientHeight - containerHeight));
+                        newContainer.setAttribute('data-x', boundedX);
+                        newContainer.setAttribute('data-y', boundedY);
+                        newContainer.style.transform = `translate(${boundedX}px, ${boundedY}px) rotate(0deg)`;
+                        designArea.appendChild(newContainer);
+                        makeElementInteractable(newContainer);
+                        selectElement(newContainer);
+                        updateSquareFootage();
+                    } catch (error) {
+                        console.error("Error during drop operation:", error);
+                        alert("An error occurred placing the container.");
+                    }
+                }
+            });
+
+            if (rotateButton) {
+                rotateButton.addEventListener('click', () => {
+                    if (selectedElement) {
+                        let currentRotation = parseInt(selectedElement.getAttribute('data-rotation') || '0');
+                        currentRotation = (currentRotation + 90) % 360;
+                        selectedElement.setAttribute('data-rotation', currentRotation);
+                        const x = selectedElement.getAttribute('data-x') || 0;
+                        const y = selectedElement.getAttribute('data-y') || 0;
+                        selectedElement.style.transform = `translate(${x}px, ${y}px) rotate(${currentRotation}deg)`;
+                    }
+                });
+            }
+
+            if (deleteButton) {
+                deleteButton.addEventListener('click', () => {
+                    if (selectedElement) {
+                        selectedElement.remove();
+                        selectedElement = null;
+                        if (rotateButton) rotateButton.disabled = true;
+                        if (deleteButton) deleteButton.disabled = true;
+                        updateSquareFootage();
+                    }
+                });
+            }
+
+            if (clearButton) {
+                clearButton.addEventListener('click', () => {
+                    if (designArea && confirm('Are you sure you want to clear the entire design area?')) {
+                        designArea.innerHTML = '';
+                        selectedElement = null;
+                        if (rotateButton) rotateButton.disabled = true;
+                        if (deleteButton) deleteButton.disabled = true;
+                        updateSquareFootage();
+                    }
+                });
+            }
+
+            if (designArea) {
+                designArea.addEventListener('click', function(event) {
+                    if (event.target === designArea) { selectElement(null); }
+                });
+            }
+
+            updateSquareFootage();
+            setTimeout(() => {
+                if (!selectedElement) {
+                    if (rotateButton) rotateButton.disabled = true;
+                    if (deleteButton) deleteButton.disabled = true;
+                }
+            }, 100);
+        });
+      })();
+    </script>
+</body>
+</html>
+```
